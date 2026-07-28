@@ -1,0 +1,87 @@
+name: Build Repository
+
+on:
+  push:
+    branches: [ Development, master ]
+  pull_request:
+    branches: [ Development, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    # REQUIRED: Grant permission to create releases and upload assets
+    permissions:
+      contents: write
+
+    steps:
+      # 1. Checkout the repository with full git history (needed for full commit logs)
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      # 2. Properly installs Lune standalone binary
+      - name: Setup Lune Runtime
+        run: |
+          LUNE_VERSION="0.10.5"
+          wget https://github.com/lune-org/lune/releases/download/v${LUNE_VERSION}/lune-${LUNE_VERSION}-linux-x86_64.zip
+          unzip lune-${LUNE_VERSION}-linux-x86_64.zip -d lune-temp
+          sudo mv lune-temp/lune /usr/local/bin/lune
+          sudo chmod +x /usr/local/bin/lune
+          rm -rf lune-${LUNE_VERSION}-linux-x86_64.zip lune-temp
+
+      # 3. Installs Darklua for the minification step
+      - name: Install Darklua
+        run: |
+          cargo install darklua
+
+      # 4. Automatically finds and runs your build.lua and config.json
+      - name: Run Build Script
+        run: |
+          BUILD_SCRIPT=$(find . -name "build.lua" -type f | head -n 1)
+          CONFIG_FILE=$(find . -name "config.json" -type f | head -n 1)
+          
+          echo "Found build script at: $BUILD_SCRIPT"
+          echo "Found config file at: $CONFIG_FILE"
+          
+          if [ -z "$BUILD_SCRIPT" ]; then
+            echo "Error: build.lua not found in the repository!"
+            exit 1
+          fi
+          
+          lune run "$BUILD_SCRIPT" "$CONFIG_FILE"
+          
+      # 5. Uploads Main.lua as an Action Artifact
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-output
+          path: Main.lua
+
+      # 6. Generate a full log of features/commits for the Release Notes
+      - name: Generate Commit Log
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          # Try to find the previous tag to compare against
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          echo "### 🚀 Features & Changes" > release_notes.md
+          echo "" >> release_notes.md
+          
+          # If a previous tag exists, get logs since then. Otherwise, get all logs.
+          if [ -z "$PREV_TAG" ]; then
+            git log --pretty=format:"- %s (%h)" >> release_notes.md
+          else
+            git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD >> release_notes.md
+          fi
+
+      # 7. Automatically Create Release and Upload Asset with the full log
+      - name: Create GitHub Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Release Build ${{ github.run_number }}
+          files: Main.lua
+          body_path: release_notes.md # Uses the markdown file we generated in Step 6
