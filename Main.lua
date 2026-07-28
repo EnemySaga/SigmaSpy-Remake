@@ -5,7 +5,6 @@ local Configuration = {
 	FolderName = "Sigma Spy",
 	RepoUrl = [[https://raw.githubusercontent.com/EnemySaga/SigmaSpy-Remake/refs/heads/main]],
 	ParserUrl = [[https://raw.githubusercontent.com/IEnemyFiles/Roblox-Parser/refs/heads/main/Main.luau]],
-    Directory = "Sigma Spy"
 }
 
 --// Load overwrites
@@ -26,7 +25,9 @@ local Services = setmetatable({}, {
 })
 
 --// Files module
-local Files = loadstring(game:HttpGet(`{Configuration.RepoUrl}/lib/Files.lua`))()
+local Files = (function()
+	--INSERT: @lib/Files.lua
+end)()
 Files:PushConfig(Configuration)
 Files:Init({
 	Services = Services
@@ -41,12 +42,12 @@ local Scripts = {
 	Files = Files,
 
 	--// Libraries
-	Process = game:HttpGet(`{Configuration.RepoUrl}/lib/Process.lua`),
-	Hook = game:HttpGet(`{Configuration.RepoUrl}/lib/Hook.lua`),
-	Flags = game:HttpGet(`{Configuration.RepoUrl}/lib/Flags.lua`),
-	Ui = game:HttpGet(`{Configuration.RepoUrl}/lib/Ui.lua`),
-	Generation = game:HttpGet(`{Configuration.RepoUrl}/lib/Generation.lua`),
-	Communication = game:HttpGet(`{Configuration.RepoUrl}/lib/Communication.lua`)
+	Process = {"base64", "COMPILE: @lib/Process.lua"},
+	Hook = {"base64", "COMPILE: @lib/Hook.lua"},
+	Flags = {"base64", "COMPILE: @lib/Flags.lua"},
+	Ui = {"base64", "COMPILE: @lib/Ui.lua"},
+	Generation = {"base64", "COMPILE: @lib/Generation.lua"},
+	Communication = {"base64", "COMPILE: @lib/Communication.lua"}
 }
 
 --// Services
@@ -70,8 +71,7 @@ Ui:SetFontFile(FontJsonFile)
 Process:CheckConfig(Config)
 Files:LoadModules(Modules, {
 	Modules = Modules,
-	Services = Services,
-    Configuration = Configuration
+	Services = Services
 })
 
 --// ReGui Create window
