@@ -7,7 +7,7 @@
 - **Please do not use Potassium in games with Actors as Potassium's crude implimentations break**
 # Loadstring
 ```
---// Remake Sigma Spy @EnemyFiles
+--// SigmaSpy-Remake @EnemySaga
 loadstring(game:HttpGet("https://raw.githubusercontent.com/EnemySaga/SigmaSpy-Remake/refs/heads/main/Main.lua"), "Sigma Spy")()
 ```
 # Features ⚡
