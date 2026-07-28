@@ -2,9 +2,9 @@ name: Build Repository
 
 on:
   push:
-    branches: [ Development, master ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ Development, master ]
+    branches: [ main, master ]
 
 jobs:
   build:
