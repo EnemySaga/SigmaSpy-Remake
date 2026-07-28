@@ -562,23 +562,21 @@ local function ProcessRemote(OriginalFunc, MetaMethod: string, self, Method: str
 end
 
 function Hook:HookRemoteTypeIndex(ClassName: string, FuncName: string)
-	local Remote, Func = pcall(function()
+	local Ok, Remote, Func = pcall(function()
 		local Temp = Instance.new(ClassName)
 		return Temp, Temp[FuncName]
 	end)
 
-	if not Remote or not Func or not IsFunction(Func) then
+	if not Ok or not Remote or not IsFunction(Func) then
 		--// Prefab creation failed or method not found — skip this class
 		return
 	end
-
-	local TempRemote, TempFunc = Remote, Func
 
 	--// Remotes will share the same functions
 	--// 	For example FireServer will be identical
 	--// Addionally, this is for __index calls.
 	--// 	A __namecall hook will not detect this
-	local OriginalFunc = self:HookFunction(TempFunc, function(self, ...)
+	local OriginalFunc = self:HookFunction(Func, function(self, ...)
 		--// Check if the Object is allowed
 		if not Process:RemoteAllowed(self, "Send", FuncName) then return end
 
@@ -588,7 +586,7 @@ function Hook:HookRemoteTypeIndex(ClassName: string, FuncName: string)
 
 	--// Destroy the temporary prefab so it doesn't linger orphaned
 	pcall(function()
-		TempRemote:Destroy()
+		Remote:Destroy()
 	end)
 end
 
